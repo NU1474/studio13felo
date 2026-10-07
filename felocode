@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v3D Studio - バッテリーコンテナ仮想設計</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- PDF出力用ライブラリ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- ファイル保存用 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header id="app-header">
+        <h1>⚡ v3D Studio</h1>
+        <div id="header-buttons">
+            <button id="btn-pdf" class="header-btn">📄 PDF出力</button>
+            <button id="btn-code" class="header-btn">💻 コード生成</button>
+            <button id="btn-download" class="header-btn">⬇️ ダウンロード</button>
+            <button id="btn-share" class="header-btn">🔗 共有</button>
+            <button id="btn-save-temp" class="header-btn">💾 一時保存</button>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <div id="main-container">
+        <!-- 左サイドバー: 入力パネル -->
+        <aside id="sidebar">
+            <!-- コンテナサイズ選択 -->
+            <section class="panel-section">
+                <h3>📦 コンテナサイズ</h3>
+                <select id="container-size">
+                    <option value="10ft" data-w="2991" data-d="2438" data-h="2591">10ft (W:2,991 × D:2,438 × H:2,591mm)</option>
+                    <option value="12ft" data-w="3658" data-d="2438" data-h="2591">12ft (W:3,658 × D:2,438 × H:2,591mm)</option>
+                    <option value="20ft" data-w="6058" data-d="2438" data-h="2591" selected>20ft (W:6,058 × D:2,438 × H:2,591mm)</option>
+                    <option value="40ft" data-w="12192" data-d="2438" data-h="2591">40ft (W:12,192 × D:2,438 × H:2,591mm)</option>
+                </select>
+                <div class="input-row">
+                    <label>外装透明度 (0.0 - 1.0):</label>
+                    <input type="number" id="container-opacity" min="0" max="1" step="0.05" value="0.3">
+                </div>
+            </section>
+
+            <!-- 項目1: バッテリーセル -->
+            <section class="panel-section battery-section">
+                <h3>🔋 バッテリーセル <span class="color-indicator" style="background:#1a56ff;"></span></h3>
+                <div class="input-grid">
+                    <label>縦 (mm): <input type="number" id="cell-length" value="173" min="1"></label>
+                    <label>横 (mm): <input type="number" id="cell-width" value="48" min="1"></label>
+                    <label>高さ (mm): <input type="number" id="cell-height" value="202" min="1"></label>
+                    <label>容量 (Ah): <input type="number" id="cell-capacity" value="280" min="1"></label>
+                    <label>1パック内セル数: <input type="number" id="cells-per-pack" value="16" min="1"></label>
+                    <label>1ラック内パック数: <input type="number" id="packs-per-rack" value="8" min="1"></label>
+                    <label>パック重量 (kg): <input type="number" id="pack-weight" value="45" min="0"></label>
+                    <label>ラック配置数 (縦): <input type="number" id="rack-count-x" value="4" min="1"></label>
+                    <label>ラック配置数 (横): <input type="number" id="rack-count-z" value="1" min="1"></label>
+                    <label>ラック重量 (kg): <input type="number" id="rack-weight" value="350" min="0"></label>
+                </div>
+            </section>
+
+            <!-- 項目2: PCS -->
+            <section class="panel-section">
+                <h3>⚡ PCS <span class="color-indicator" style="background:#ffcc00;"></span></h3>
+                <div class="input-grid">
+                    <label>幅 (mm): <input type="number" id="pcs-width" value="800" min="1"></label>
+                    <label>奥行 (mm): <input type="number" id="pcs-depth" value="600" min="1"></label>
+                    <label>高さ (mm): <input type="number" id="pcs-height" value="1200" min="1"></label>
+                    <label>重量 (kg): <input type="number" id="pcs-weight" value="250" min="0"></label>
+                </div>
+            </section>
+
+            <!-- 項目3: インバータ -->
+            <section class="panel-section">
+                <h3>🔄 インバータ <span class="color-indicator" style="background:#ff8c00;"></span></h3>
+                <div class="input-grid">
+                    <label>幅 (mm): <input type="number" id="inv-width" value="700" min="1"></label>
+                    <label>奥行 (mm): <input type="number" id="inv-depth" value="550" min="1"></label>
+                    <label>高さ (mm): <input type="number" id="inv-height" value="1100" min="1"></label>
+                    <label>重量 (kg): <input type="number" id="inv-weight" value="180" min="0"></label>
+                </div>
+            </section>
+
+            <!-- 項目4: HVAC -->
+            <section class="panel-section">
+                <h3>❄️ HVAC (水冷) <span class="color-indicator" style="background:#00e5ff;"></span></h3>
+                <div class="input-row">
+                    <label>色: <input type="color" id="hvac-color" value="#00e5ff"></label>
+                </div>
+                <div class="input-grid">
+                    <label>幅 (mm): <input type="number" id="hvac-width" value="1000" min="1"></label>
+                    <label>奥行 (mm): <input type="number" id="hvac-depth" value="800" min="1"></label>
+                    <label>高さ (mm): <input type="number" id="hvac-height" value="2000" min="1"></label>
+                    <label>重量 (kg): <input type="number" id="hvac-weight" value="350" min="0"></label>
+                </div>
+            </section>
+
+            <!-- 項目5: NOVEC -->
+            <section class="panel-section">
+                <h3>🧯 NOVEC (消化設備) <span class="color-indicator" style="background:#ff1a1a;"></span></h3>
+                <div class="input-row">
+                    <label>色: <input type="color" id="novec-color" value="#ff1a1a"></label>
+                </div>
+                <div class="input-grid">
+                    <label>幅 (mm): <input type="number" id="novec-width" value="600" min="1"></label>
+                    <label>奥行 (mm): <input type="number" id="novec-depth" value="500" min="1"></label>
+                    <label>高さ (mm): <input type="number" id="novec-height" value="1500" min="1"></label>
+                    <label>重量 (kg): <input type="number" id="novec-weight" value="120" min="0"></label>
+                </div>
+            </section>
+
+            <!-- 項目6: コンテナ外装 -->
+            <section class="panel-section">
+                <h3>🏗️ コンテナ外装 <span class="color-indicator" style="background:#808080;"></span></h3>
+                <div class="input-row">
+                    <label>色: <input type="color" id="container-color" value="#808080"></label>
+                </div>
+            </section>
+
+            <!-- 項目7: 基礎 -->
+            <section class="panel-section">
+                <h3>🪨 基礎 <span class="color-indicator" style="background:#404040;"></span></h3>
+                <div class="input-row">
+                    <label>高さ (mm): <input type="number" id="foundation-height" value="200" min="1"></label>
+                </div>
+            </section>
+
+            <!-- 項目8: 筐体・配管重量 -->
+            <section class="panel-section">
+                <h3>⚙️ 筐体・配管重量</h3>
+                <div class="input-row">
+                    <label>重量 (kg): <input type="number" id="structure-weight" value="1500" min="0"></label>
+                </div>
+            </section>
+        </aside>
+
+        <!-- 3Dビューポート -->
+        <div id="viewport">
+            <canvas id="three-canvas"></canvas>
+            <!-- 右上情報オーバーレイ -->
+            <div id="info-overlay-topright">
+                <h4>📋 機器構成</h4>
+                <ul>
+                    <li>🔋 Battery Rack (LFP Pack)</li>
+                    <li>❄️ Liquid Cooling HVAC</li>
+                    <li>⚡ PCS / Power Inverter</li>
+                    <li>🛡️ DC/AC Protection Panel</li>
+                    <li>🧯 Fire Suppression (Novec)</li>
+                </ul>
+            </div>
+            <!-- 下部情報オーバーレイ -->
+            <div id="info-overlay-bottom">
+                <div class="info-item">総定格蓄電容量: <span id="total-capacity">0.00</span> MWh</div>
+                <div class="info-item">システム総重量: <span id="total-weight">0.00</span> t</div>
+                <div class="info-item">推定軸重バランス F/R: <span id="weight-balance">0.00</span> t</div>
+                <div class="info-item">通路クリアランス: <span id="clearance">0</span> mm</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- モーダル: コード生成結果 -->
+    <div id="code-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-modal">&times;</span>
+            <h2>生成コード</h2>
+            <textarea id="generated-code" readonly></textarea>
+            <button id="copy-code">コピー</button>
+        </div>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast" class="toast"></div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/container.js"></script>
+    <script src="js/equipment.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
